@@ -1,0 +1,4 @@
+# Only LF line endings allowed, unless a Windows .bat or .cmd file.
+* text=auto eol=lf
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf

@@ -1,0 +1,33 @@
+# This docker compose is for running the application locally - it shouldn't be 
+# used in production environments. There's nothing to necessarily say that the
+# constituent service images can't, though.
+
+version: "3"
+services:
+    devtools:
+        image: ${SVELTEKIT_DEVTOOLS_IMAGE_NAME:-devtools}
+        container_name: ${SVELTEKIT_DEVTOOLS_CONTAINER_NAME:-devtools}
+        restart: always
+        environment:
+             # Rudimentary way of identifying that we're inside the container
+            - ENV_IS_CONTAINER=1
+        ports:
+            - ${SVELTEKIT_BUILD_PORT:-4173}:4173
+            - ${SVELTEKIT_DEV_PORT:-5173}:5173
+        volumes:
+            - ./:/home/${SVELTEKIT_PROJECT:-development}
+
+            # Replaces node_modules with an empty folder due to Win vs. Linux 
+            # issues when mounted
+            - /home/${SVELTEKIT_PROJECT:-development}/node_modules
+
+            # This is only for local development
+            - ${SVELTEKIT_AWS_PATH:-$HOME/.aws}:/root/.aws:ro
+            - ${SVELTEKIT_GIT_CONFIG_PATH:-$HOME/.gitconfig}:/root/.gitconfig:ro
+        command:
+            - /bin/sh
+            - -c
+            - |
+                npm install
+                echo "Dev Container is running!"
+                sleep infinity

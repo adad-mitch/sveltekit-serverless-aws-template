@@ -1,0 +1,41 @@
+{
+	"name": "sveltekit-serverless-aws-template",
+	"description": "A moderately configurable template for getting a serverless SvelteKit application quickly set up on AWS.",
+	"version": "1.0.0",
+	"type": "module",
+	"license": "MIT",
+	"private": true,
+	"scripts": {
+		"dev": "test $ENV_IS_CONTAINER -eq 1 && vite dev --host || vite dev",
+		"build": "vite build",
+		"preview": "test $ENV_IS_CONTAINER -eq 1 && vite preview --host || vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest run",
+		"test:watch": "vitest watch",
+		"lint": "prettier --plugin-search-dir . --check . && eslint .",
+		"format": "prettier --plugin-search-dir . --write .",
+		"prepare": "husky install && chmod ug+x .husky/* && git update-index --add --chmod=+x .husky/pre-commit",
+		"pre-commit": "lint-staged"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-node": "^1.3.0",
+		"@sveltejs/kit": "^1.20.4",
+		"@typescript-eslint/eslint-plugin": "^5.45.0",
+		"@typescript-eslint/parser": "^5.45.0",
+		"dotenv": "^16.3.1",
+		"eslint": "^8.28.0",
+		"eslint-config-prettier": "^8.5.0",
+		"eslint-plugin-svelte": "^2.30.0",
+		"husky": "^8.0.3",
+		"lint-staged": "^13.2.3",
+		"prettier": "^2.8.0",
+		"prettier-plugin-svelte": "^2.10.1",
+		"svelte": "^4.0.0",
+		"svelte-check": "^3.4.3",
+		"tslib": "^2.4.1",
+		"typescript": "^5.0.0",
+		"vite": "4.3.9",
+		"vitest": "^0.32.2"
+	}
+}
