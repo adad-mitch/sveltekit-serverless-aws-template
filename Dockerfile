@@ -23,7 +23,7 @@ RUN TF_VERSION=${TF_VERSION} \
 
 RUN npm i -g vite
 
-RUN npx playwright install-deps && npx playwright install
+RUN apt-get update && npx playwright install-deps
 
 WORKDIR /home/${PROJECT}
 

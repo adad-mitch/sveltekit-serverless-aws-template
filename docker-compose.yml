@@ -29,5 +29,6 @@ services:
             - -c
             - |
                 npm install
+                npx playwright install
                 echo "Dev Container is running!"
                 sleep infinity
