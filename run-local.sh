@@ -62,7 +62,7 @@ function build_clean() {
     
     log_info "Setting file permissions..."
     chmod +x ./* # The container should keep this permission when built
-
+    
     log_info "Building the Docker image..."
     docker build -t "$SVELTEKIT_DEVTOOLS_IMAGE_NAME" --build-arg NODE_VERSION="$SVELTEKIT_NODE_VERSION" \
     --build-arg PROJECT="$SVELTEKIT_PROJECT" --build-arg TF_VERSION="$SVELTEKIT_TF_VERSION" . || \

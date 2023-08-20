@@ -129,7 +129,7 @@ function deploy() {
     
     log_info "Initialising Terraform..."
     sudo terraform init || error_and_exit "terraform init failed"
-
+    
     log_info "Creating .tfvars file..."
     local tf_vars_string="build_artefact_path = \"$SVELTEKIT_BUILD_PATH\""$'\n'
     if [ -n "$SVELTEKIT_AWS_PROFILE" ]; then
@@ -149,17 +149,17 @@ function deploy() {
         log_info "Using custom AWS Lambda handler: '$SVELTEKIT_LAMBDA_HANDLER_NAME'..."
     fi
     if [ -n "$SVELTEKIT_NODE_RUNTIME" ]; then
-        # AWS requires the full runtime string, i.e., "nodejsXX.x" as opposed to just "XX". 
+        # AWS requires the full runtime string, i.e., "nodejsXX.x" as opposed to just "XX".
         tf_vars_string+="deployment_lambda_handler_runtime = \"nodejs$SVELTEKIT_NODE_RUNTIME.x\""$'\n'
         log_info "Using custom Node runtime: '$SVELTEKIT_NODE_RUNTIME'..."
     fi
-
+    
     echo -n "$tf_vars_string" > deploy.auto.tfvars
     terraform fmt ./deploy.auto.tfvars
-
+    
     # Technically the SECONDS variable accounts for the time spent at the
     # approval stage, but in automation environments, you would probably
-    # want to auto approve - and this is where knowing the time taken 
+    # want to auto approve - and this is where knowing the time taken
     # would be more important (i.e., performance monitoring, etc.).
     log_info "Running Terraform apply..."
     if [ "$1" == true ]; then
@@ -167,14 +167,14 @@ function deploy() {
     else
         terraform apply || error_and_exit "terraform apply failed or was cancelled"
     fi
-
+    
     local cf_domain
     cf_domain=$(terraform output -raw cloudfront_domain)
-
+    
     log_info "Verifying successful deployment..."
     expected_status_code=200
     status_code=$(curl -s -o /dev/null -w "%{http_code}" "https://$cf_domain")
-
+    
     if [ "$status_code" -eq $expected_status_code ]; then
         log_success "Your SvelteKit application is live at https://$cf_domain 🎉"
     else
