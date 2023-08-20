@@ -1,6 +1,6 @@
 # SvelteKit Serverless AWS Template
 
-This is a moderately configurable template for getting a serverless SvelteKit application quickly deployed to AWS, using Terraform. It's also a bit of a developer toolkit, containing a Dockerfile & docker-compose.yml; local development utility scripts; linting and formatting configurations that may be of convenience. This particular project is configured to use TypeScript, Vitest for unit testing, uses [adapter-node](https://www.npmjs.com/package/@sveltejs/adapter-node) and has a simple "Welcome to SvelteKit" page at the root (i.e., a Skeleton SvelteKit application).
+This is a moderately configurable template for getting a serverless SvelteKit application quickly deployed to AWS, using Terraform. It's also a bit of a developer toolkit, containing a Dockerfile & docker-compose.yml; local development utility scripts; linting and formatting configurations that may be of convenience. This particular project is configured to use TypeScript, Vitest for unit testing, Playwright for browser testing, uses [adapter-node](https://www.npmjs.com/package/@sveltejs/adapter-node) and has a simple "Welcome to SvelteKit" page at the root (i.e., a skeleton SvelteKit application with all the additional options selected when creating a new project from the CLI).
 
 This was inspired by a mix of [this post by Sean W. Lawrence](https://www.sean-lawrence.com/deploying-sveltekit-to-aws-lambda/), [sveltekit-adapter-aws](https://github.com/MikeBild/sveltekit-adapter-aws), and my own strange musings.
 

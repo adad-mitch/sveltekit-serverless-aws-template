@@ -23,6 +23,8 @@ RUN TF_VERSION=${TF_VERSION} \
 
 RUN npm i -g vite
 
+RUN npx playwright install-deps && npx playwright install
+
 WORKDIR /home/${PROJECT}
 
 # SvelteKit build preview and dev port numbers respectively
