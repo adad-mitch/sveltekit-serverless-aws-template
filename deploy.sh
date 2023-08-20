@@ -168,7 +168,8 @@ function deploy() {
         terraform apply || error_and_exit "terraform apply failed or was cancelled"
     fi
 
-    local cf_domain=$(terraform output -raw cloudfront_domain)
+    local cf_domain
+    cf_domain=$(terraform output -raw cloudfront_domain)
 
     log_info "Verifying successful deployment..."
     expected_status_code=200
