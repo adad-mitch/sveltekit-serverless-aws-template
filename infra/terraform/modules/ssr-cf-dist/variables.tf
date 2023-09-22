@@ -40,6 +40,12 @@ variable "api_gw_deployment_stage_name" {
   }
 }
 
+variable "api_gw_api_key" {
+  description = "The API key to use for the AWS API Gateway origin. It will be forwarded as an `x-api-key` header."
+  type        = string
+  sensitive   = true
+}
+
 variable "acm_certificate_arn" {
   default     = ""
   description = "The ARN of an ACM certificate to use for the CloudFront domain. It must be in us-west-1. Required if you want to use a custom domain name (otherwise CloudFront will return a 403)."

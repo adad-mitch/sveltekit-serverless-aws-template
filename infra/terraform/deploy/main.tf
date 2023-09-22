@@ -29,6 +29,7 @@ module "cdn" {
   # Stripping HTTPS and the stage name away to produce the raw domain name
   api_gw_domain_name           = replace(module.lambda_proxy.api_invoke_url, "/^https?://([^/]*).*/", "$1")
   api_gw_deployment_stage_name = "/${local.default_deployment_stage_name}"
+  api_gw_api_key               = module.lambda_proxy.api_key
   acm_certificate_arn          = var.domain_name != "" ? var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.certificate[0].arn : ""
 
   alternate_cnames = var.domain_name != "" && var.route53_hosted_zone_id != "" ? [

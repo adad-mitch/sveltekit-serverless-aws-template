@@ -18,6 +18,11 @@ resource "aws_cloudfront_distribution" "cdn" {
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
+
+    custom_header {
+      name  = "x-api-key"
+      value = var.api_gw_api_key
+    }
   }
 
   default_cache_behavior {

@@ -32,3 +32,9 @@ output "api_invoke_url" {
   description = "The invocation URL of the AWS API Gateway, pointing to the provided stage."
   value       = aws_api_gateway_deployment.proxy_api_gw.invoke_url
 }
+
+output "api_key" {
+  description = "The API key for the AWS API Gateway REST API. When used, this should be sent in an `x-api-key` header."
+  value       = random_password.api_key.result
+  sensitive   = true
+}
