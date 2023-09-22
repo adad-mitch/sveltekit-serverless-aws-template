@@ -129,7 +129,7 @@ function deploy() {
     
     log_info "Initialising Terraform..."
     sudo terraform init || error_and_exit "terraform init failed"
-    
+
     log_info "Creating .tfvars file..."
     local tf_vars_string="build_artefact_path = \"$SVELTEKIT_BUILD_PATH\""$'\n'
     if [ -n "$SVELTEKIT_AWS_PROFILE" ]; then
@@ -149,17 +149,54 @@ function deploy() {
         log_info "Using custom AWS Lambda handler: '$SVELTEKIT_LAMBDA_HANDLER_NAME'..."
     fi
     if [ -n "$SVELTEKIT_NODE_RUNTIME" ]; then
-        # AWS requires the full runtime string, i.e., "nodejsXX.x" as opposed to just "XX".
+        # AWS requires the full runtime string, i.e., "nodejsXX.x" as opposed to just "XX". 
         tf_vars_string+="deployment_lambda_handler_runtime = \"nodejs$SVELTEKIT_NODE_RUNTIME.x\""$'\n'
         log_info "Using custom Node runtime: '$SVELTEKIT_NODE_RUNTIME'..."
     fi
-    
+    if [[ -n "$SVELTEKIT_DOMAIN_NAME" || -n "$SVELTEKIT_ROUTE53_HOSTED_ZONE_ID" ]]; then
+        if [ -n "$SVELTEKIT_DOMAIN_NAME" ]; then
+            tf_vars_string+="domain_name = \"$SVELTEKIT_DOMAIN_NAME\""$'\n'
+            log_info "Using custom domain name: '$SVELTEKIT_DOMAIN_NAME'..."
+        else
+            error_and_exit "SVELTEKIT_DOMAIN_NAME must be provided if SVELTEKIT_ROUTE53_HOSTED_ZONE_ID is provided"
+        fi
+        if [ -n "$SVELTEKIT_ROUTE53_HOSTED_ZONE_ID" ]; then
+            tf_vars_string+="route53_hosted_zone_id = \"$SVELTEKIT_ROUTE53_HOSTED_ZONE_ID\""$'\n'
+            log_info "Using Route53 hosted zone ID: '$SVELTEKIT_ROUTE53_HOSTED_ZONE_ID'..."
+        else
+            error_and_exit "SVELTEKIT_ROUTE53_HOSTED_ZONE_ID must be provided if SVELTEKIT_DOMAIN_NAME is provided"
+        fi
+    fi
+    if [ -n "$SVELTEKIT_SUBDOMAIN" ]; then
+        if [ -z "$SVELTEKIT_DOMAIN_NAME" ]; then
+            error_and_exit "SVELTEKIT_DOMAIN_NAME must be provided if SVELTEKIT_SUBDOMAIN is provided"
+        fi
+        tf_vars_string+="subdomain = \"$SVELTEKIT_SUBDOMAIN\""$'\n'
+        log_info "Using custom subdomain: '$SVELTEKIT_SUBDOMAIN'..."
+    fi
+    if [ -n "$SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_ARN" ]; then
+        timestamp="$(date +%Y%m%d_%H%M%S)"
+        tf_vars_string+="route53_domain_cross_account_assume_role_configuration = {"$'\n'
+        tf_vars_string+="role_arn = \"$SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_ARN\""$'\n'
+        tf_vars_string+="session_name = \"sk-svc-deploy-$timestamp\""$'\n'
+        tf_vars_string+="external_id = \"$SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_EXTERNAL_ID\""$'\n'
+        tf_vars_string+="}"
+        log_info "Using cross-account assume role ARN: '$SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_ARN'..."
+    fi
+    if [ -n "$SVELTEKIT_ACM_CERTIFICATE_ARN" ]; then
+        if [[ -z "$SVELTEKIT_DOMAIN_NAME" || -z "$SVELTEKIT_ROUTE53_HOSTED_ZONE_ID" ]]; then
+            log_warning "SVELTEKIT_ACM_CERTIFICATE_ARN won't do anything unless SVELTEKIT_DOMAIN_NAME and SVELTEKIT_ROUTE53_HOSTED_ZONE_ID are provided."
+        fi
+        tf_vars_string+="acm_certificate_arn = \"$SVELTEKIT_ACM_CERTIFICATE_ARN\""$'\n'
+        log_info "Using existing ACM Certificate ARN: '$SVELTEKIT_ACM_CERTIFICATE_ARN'..."
+    fi
+
     echo -n "$tf_vars_string" > deploy.auto.tfvars
     terraform fmt ./deploy.auto.tfvars
-    
+
     # Technically the SECONDS variable accounts for the time spent at the
     # approval stage, but in automation environments, you would probably
-    # want to auto approve - and this is where knowing the time taken
+    # want to auto approve - and this is where knowing the time taken 
     # would be more important (i.e., performance monitoring, etc.).
     log_info "Running Terraform apply..."
     if [ "$1" == true ]; then
@@ -167,18 +204,18 @@ function deploy() {
     else
         terraform apply || error_and_exit "terraform apply failed or was cancelled"
     fi
-    
-    local cf_domain
-    cf_domain=$(terraform output -raw cloudfront_domain)
-    
+
+    local domain
+    domain=$(terraform output -raw front_domain)
+
     log_info "Verifying successful deployment..."
     expected_status_code=200
-    status_code=$(curl -s -o /dev/null -w "%{http_code}" "https://$cf_domain")
-    
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" "https://$domain")
+
     if [ "$status_code" -eq $expected_status_code ]; then
-        log_success "Your SvelteKit application is live at https://$cf_domain 🎉"
+        log_success "Your SvelteKit application is live at https://$domain 🎉"
     else
-        log_warning "Your SvelteKit application has been deployed to https://$cf_domain, but did not get a $expected_status_code status code back (Got $status_code)."
+        log_warning "Your SvelteKit application has been deployed to https://$domain, but did not get a $expected_status_code status code back (Got $status_code)."
     fi
 }
 

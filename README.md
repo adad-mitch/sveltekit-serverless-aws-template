@@ -28,9 +28,98 @@ Feel free to use this however suits; this is deliberately a template so that you
         -   `--no-build` flag: Skips the build step and uses whatever is currently in the specified build folder (default `build`). Requires that a build has been done before.
 -   Remember to change the README, LICENSE, CODE_OF_CONDUCT etc. to fit your project.
 
+## Using a custom domain name
+
+There is the option of setting up a custom domain with AWS Route 53 pointing to the generated CloudFront distribution, but it's a little more invested than the rest of the configurations...
+
+-   You will need to have the desired domain registered beforehand in AWS Route 53, and this should have its own hosted zone that you can provide the ID for.
+    - As usual, see the `.env.dev.example` file for the environment variables, but pertinent to this bit of the configuration are the `SVELTEKIT_DOMAIN_NAME` and `SVELTEKIT_ROUTE53_HOSTED_ZONE_ID` variables.
+-   You can just use the domain apex, in which case, you can leave the `SVELTEKIT_SUBDOMAIN` environment variable blank, but you can provide a subdomain (or a chain of them) if you like (a "www" subdomain will be added to whatever concatenation of subdomain + domain name you have provided, and the site will be accessible with or without it).
+
+If the infrastructure you're provisioning sits in the same AWS account as the AWS Route 53 hosted zone that you want to use, then you can skip this step. However, it's a pretty common use case for people to have their DNS stuff centrally-managed in one account and other bits of infrastructure elsewhere. Therefore, the template allows you to provide the ARN of a role that can be assumed in another account, to manage the hosted zone and AWS Certificate Manager (ACM) certificates. The environment variable to pass this into is `SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_ARN`, and the role in the account with the hosted zone should look something like the following:
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "route53:GetHostedZone",
+                    "route53:ListResourceRecordSets",
+                    "route53:ChangeResourceRecordSets",
+                    "route53:DeleteHostedZone"
+                ],
+                "Resource": "arn:aws:route53:::hostedzone/*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "route53:GetChange"
+                ],
+                "Resource": "arn:aws:route53:::change/*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "route53:ChangeTagsForResource"
+                ],
+                "Resource": [
+                    "arn:aws:route53:::hostedzone/*",
+                    "arn:aws:route53:::healthcheck/*"
+                ]
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "route53:CreateHostedZone",
+                    "ec2:DescribeVpcs",
+                    "route53:ListHostedZones",
+                    "route53:GetHostedZoneCount"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "acm:RequestCertificate",
+                    "acm:GetCertificate",
+                    "acm:AddTagsToCertificate",
+                    "acm:DescribeCertificate",
+                    "acm:ListTagsForCertificate",
+                    "acm:ListCertificates",
+                    "acm:DeleteCertificate",
+                    "acm:UpdateCertificateOptions",
+                    "acm:RemoveTagsFromCertificate"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+(Yeah, this isn't the world's most tightly locked-down IAM role - you could probably restrict it down to particular ARNs and such when you drop it into your own account.)
+
+The trust policy should look something like this:
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "AWS": "arn:aws:iam::{ACCOUNT_ID_OF_WHERE_YOU'RE_APPLYING_YOUR_INFRASTRUCTURE}:root"
+                },
+                "Action": "sts:AssumeRole",
+                "Condition": {}
+            }
+        ]
+    }
+
+You can also provide an external ID for assuming the role if you like via the `SVELTEKIT_ROUTE53_CROSS_ACCOUNT_ROLE_EXTERNAL_ID` environment variable.
+
+Lastly, your CloudFront distribution will need an ACM certificate to prove you control the domain you want to use. This will need to be provisioned in the account you want your infrastructure in (afaik you can't use a certificate between accounts). You can create one yourself and provide the ARN for it with the `SVELTEKIT_ACM_CERTIFICATE_ARN` environment variable, but you will need to do all of the DNS validation and management of the certificate yourself. Alternatively, if you leave that environment variable blank, the Terraform will create one for you - though note that it doesn't keep track of expiry of that certificate (will be after 1 year).
+
 ## Other things to consider...
 
 -   As of writing, ^4.4.0 versions of Vite seem to cause a problem when changing environment variables or Svelte/Vite config files, where the dev server crashes, rather than simply restarting. That's why this is using v4.3.9.
 -   Everything here should work well locally, but things obviously change when using an automated environment. For example, the build will capture application environment variables in a `.env` if you deploy from your machine, but you will need an external source for these in a pipeline.
 -   The repository is configured to force use of LF rather than CRLF wherever possible. This is enforced by the `.gitattributes` file, as well as the `.prettierrc` file - feel free to change formatting etc. to whatever suits you.
--   Admittedly, while the Terraform is highly reusable (you should be able to transplant it elsewhere and use it out of the box for similar workloads), it's fairly inflexible. There are a few things I thought about configuring support for, including multiple environments, setting up a CNAME record in front of CloudFront, log retention configuration, etc. - and I may add these things later on if I can think of an approach that wouldn't sacrifice the speed and simplicity of the template.

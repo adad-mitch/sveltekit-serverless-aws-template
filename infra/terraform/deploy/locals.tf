@@ -8,6 +8,9 @@ locals {
   # Ensure a trailing slash, whether one was provided or not
   build_artefact_path = substr(var.build_artefact_path, -1, 1) == "/" ? var.build_artefact_path : "${var.build_artefact_path}/"
 
+  # Add the period on to the subdomain if it exists, if it doesn't leave empty
+  subdomain = var.subdomain != "" ? "${var.subdomain}." : ""
+
   # ------------------ #
 
   default_service_name          = "sveltekit-service"

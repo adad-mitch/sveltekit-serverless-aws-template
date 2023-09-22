@@ -1,3 +1,9 @@
+variable "aws_profile" {
+  default     = "default"
+  description = "The AWS profile to use for AWS CLI commands. This should match the one used in the 'providers' block of the calling module."
+  type        = string
+}
+
 variable "resource_prefix" {
   default     = ""
   description = "A value to prefix provisioned resources with, where applicable."
@@ -32,4 +38,16 @@ variable "api_gw_deployment_stage_name" {
     condition     = substr(var.api_gw_deployment_stage_name, 0, 1) == "/"
     error_message = "The deployment stage name must start with a forward slash (/)."
   }
+}
+
+variable "acm_certificate_arn" {
+  default     = ""
+  description = "The ARN of an ACM certificate to use for the CloudFront domain. It must be in us-west-1. Required if you want to use a custom domain name (otherwise CloudFront will return a 403)."
+  type        = string
+}
+
+variable "alternate_cnames" {
+  default     = []
+  description = "A set of alternate CNAMEs that the CloudFront distribution should be accessible from. The AWS ACM certificate provided should cover these domains."
+  type        = set(string)
 }
