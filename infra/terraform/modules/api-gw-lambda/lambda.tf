@@ -22,9 +22,9 @@ resource "null_resource" "update_lambda_origin_env" {
     command = <<-EOT
       aws lambda update-function-configuration \
       --profile ${var.aws_profile} \
-      --region ${data.aws_region.current.name} \
+      --region ${data.aws_region.current.region} \
       --function-name ${aws_lambda_function.lambda.function_name} \
-      --environment Variables={ORIGIN=${trim(replace(aws_api_gateway_deployment.proxy_api_gw.invoke_url, "/[^/]*$", "$1"), "/")}}
+      --environment Variables={ORIGIN=${trim(replace(aws_api_gateway_stage.proxy_api_gw.invoke_url, "/[^/]*$", "$1"), "/")}}
     EOT
   }
 

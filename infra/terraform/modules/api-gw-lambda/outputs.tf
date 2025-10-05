@@ -30,7 +30,7 @@ output "api_created_date" {
 
 output "api_invoke_url" {
   description = "The invocation URL of the AWS API Gateway, pointing to the provided stage."
-  value       = aws_api_gateway_deployment.proxy_api_gw.invoke_url
+  value       = aws_api_gateway_stage.proxy_api_gw.invoke_url
 }
 
 output "api_key" {

@@ -4,7 +4,7 @@ resource "aws_lambda_permission" "api_gw_invocation" {
   function_name = aws_lambda_function.lambda.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_api_gateway_deployment.proxy_api_gw.execution_arn}*"
+  source_arn = "${aws_api_gateway_stage.proxy_api_gw.execution_arn}*"
 }
 
 
