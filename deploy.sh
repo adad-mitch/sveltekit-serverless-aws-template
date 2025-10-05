@@ -208,6 +208,33 @@ function deploy() {
     local domain
     domain=$(terraform output -raw front_domain)
 
+    # Invalidate CloudFront cache after deployment
+    if [ "$SVELTEKIT_AUTO_INVALIDATE_CACHE" == "true" ]; then
+        log_info "Invalidating CloudFront cache..."
+        local cloudfront_distribution_id
+        cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)
+        
+        if [ -n "$cloudfront_distribution_id" ]; then            
+            local invalidation_id
+            invalidation_id=$(aws cloudfront create-invalidation \
+                --profile "$SVELTEKIT_AWS_PROFILE" \
+                --distribution-id "$cloudfront_distribution_id" \
+                --paths "/*" \
+                --query 'Invalidation.Id' \
+                --output text)
+            
+            if [ $? -eq 0 ]; then
+                log_success "CloudFront cache invalidation created with ID: $invalidation_id"
+            else
+                log_warning "Failed to create CloudFront cache invalidation"
+            fi
+        else
+            log_warning "Could not retrieve CloudFront distribution ID for cache invalidation"
+        fi
+    else
+        log_info "CloudFront cache will not be invalidated, because it was not required in .env.dev"
+    fi
+
     log_info "Verifying successful deployment..."
     expected_status_code=200
     status_code=$(curl -s -o /dev/null -w "%{http_code}" "https://$domain")
